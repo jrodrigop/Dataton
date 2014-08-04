@@ -1,0 +1,129 @@
+<!-- VESION DE DESARROLLO 
+Los mapas fueron extraidos de 
+http://www.numeroslocos.com/2013/07/10/shapefile/
+-->
+<!-- Basado en la libreria de D3js -->
+
+<!-- Fuentes para hacer el mapa -->
+<!-- https://gist.github.com/diegovalle/5129746 -->
+<!-- http://bost.ocks.org/mike/map/ -->
+
+
+<!-- El INEGI no es de gran ayuda... -->
+<!-- http://www.numeroslocos.com/2013/07/10/shapefile/ -->
+
+<!-- 
+  Ejecutar:
+     shp2json.sh  -  Obtiene un objeto topoJSON de un shapefile(.shp)
+                     su salida es un mapa con todas las colonias y 
+                     propiedades
+-->
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style>
+  path {
+    stroke:white;
+    stroke-width: 1px;
+  }
+  svg {
+    background-color:#EBF5FF;
+  }
+  div.tooltip {   
+    position: absolute;           
+    text-align: center;           
+    width: 150px;                  
+    height: 25px;                 
+    padding: 2px;             
+    font-size: 10px;     
+    background: #FFFFFF;
+    border: 1px;      
+    border-radius: 5px;           
+    pointer-events: none;         
+  } 
+</style>
+
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
+var width = 570,
+    height = 650;
+
+var projection = d3.geo.mercator()
+    .scale(135000)
+    .center([-103.4013758,20.6814281]) // Zapopan geoposition
+    .translate([width*0.63,height*0.62])
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var g = svg.append("g");
+
+var div = d3.select("body").append("div")   
+  .attr("class", "tooltip")               
+  .style("opacity", 0);
+
+// Load Zapopan map
+d3.json("COLONIAS2.json", function(error, topology) {
+
+//TEST 1
+/*  svg.append("path")
+      .datum(topojson.feature(topology, topology.objects.COLONIAS2))
+      .attr("d", path);*/
+
+  svg.selectAll(".subunit")
+      .data(topojson.feature(topology, topology.objects.COLONIAS2).features)
+    .enter().append("path")
+//      .attr("class", function(d) { return "subunit:" + d.properties.SETT_NAME; })
+      .attr("d", path)
+      .attr("fill","#B2B2B2")
+    .on("mouseover", function(d){
+        d3.select(this)
+        .attr("fill", "#99CCFF")
+        div.style("opacity", 1)
+        div.text(d.properties.SETT_NAME)
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY -30) + "px");
+      })
+     .on("mouseout", function(d){
+        d3.select(this)
+        .attr("fill", "#B2B2B2")
+        div.style("opacity", 0)
+      })
+  //console.log(JSON.stringify(topology.objects));
+
+/*
+    g.selectAll("path")
+     .data(topojson.object(topology, topology.objects.COLONIAS2).geometries)//for each data
+      .enter()                                                             //create a node
+       .append("path")                                                    //<path> type        
+        .attr("d", path)                                                  // and a d attribute <path d="region coords.">  
+        .attr("fill", "#B2B2B2")                                          // another one! :)
+
+    // Events
+    svg.selectAll("path")
+      .on("mouseover", function(d){
+        d3.select(this)
+        .attr("fill", "#99CCFF")
+        div.style("opacity", 1)
+        div.text("hola")
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY -30) + "px");
+      })
+      .on("mouseout", function(d){
+        d3.select(this)
+        .attr("fill", "#B2B2B2")
+        div.style("opacity", 0)
+      })
+*/
+});
+
+</script>
+</body>
+</html>
