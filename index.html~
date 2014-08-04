@@ -79,7 +79,7 @@ function selecColonia(nColonia){
                   "ZAPOPAN CENTRO",
                   "CONSTITUCION",
                   "ARCOS DE ZAPOPAN",
-                  "FRACC TABACHINES"];
+                  "FRACC DE TABACHINES"];
   if( colonias.indexOf(nColonia) > -1 )
      return "#B2B2B2"; 
   else 
@@ -91,7 +91,7 @@ function hoverColonia(nColonia){
                   "ZAPOPAN CENTRO",
                   "CONSTITUCION",
                   "ARCOS DE ZAPOPAN",
-                  "FRACC TABACHINES"];
+                  "FRACC DE TABACHINES"];
   if( colonias.indexOf(nColonia) > -1 )
     return "#99CCFF"; 
   else     
