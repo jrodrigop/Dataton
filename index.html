@@ -10,12 +10,8 @@ http://www.numeroslocos.com/2013/07/10/shapefile/
 <!-- Basado en la libreria de D3js -->
 
 <!-- Fuentes para hacer el mapa -->
-<!-- https://gist.github.com/diegovalle/5129746 -->
-<!-- http://bost.ocks.org/mike/map/ -->
-
-
-<!-- Datos colonias ... -->
-<!-- http://www.numeroslocos.com/2013/07/10/shapefile/ -->
+<!-- https://gist.github.com/diegovalle/5129746  Reproyección de los mapas -->
+<!-- http://bost.ocks.org/mike/map/  -->
 
 <!-- 
   Ejecutar:
@@ -47,59 +43,67 @@ http://www.numeroslocos.com/2013/07/10/shapefile/
     border-radius: 5px;           
     pointer-events: none;         
   } 
+  .chart rect {
+    fill: steelblue;
+  }
+
+  .chart text {
+    fill: black;
+    font: 10px sans-serif;
+    text-anchor: end;
+  }
 </style>
 
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
+<svg class="chart"></svg>
 <script>
+// General
 var width = 570,
     height = 650;
 
-var projection = d3.geo.mercator()
-    .scale(135000)
-    .center([-103.4013758,20.6814281]) // Zapopan geoposition
-    .translate([width*0.63,height*0.62])
-
-var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-var path = d3.geo.path()
-    .projection(projection);
-
-var g = svg.append("g");
-
-var div = d3.select("body").append("div")   
-  .attr("class", "tooltip")               
-  .style("opacity", 0);
-
-function selecColonia(nColonia){
-  var colonias = ["SAN JUAN DE OCOTAN",
+var colonias = ["SAN JUAN DE OCOTAN",
                   "ZAPOPAN CENTRO",
                   "CONSTITUCION",
                   "ARCOS DE ZAPOPAN",
                   "FRACC TABACHINES"];
+var db = {'FRACC TABACHINES':["ROBO MOTOCICLETA",	4, "VIOLACION LEY GENERAL DE SALUD",	4, "VEHICULO RECUPERADO",	7,"ROBO NEGOCIO",	14,"ROBO VEHICULO",	37],
+          'ZAPOPAN CENTRO':["VEHICULO RECUPERADO",	5,"CONSUMIR ESTUPEFACIENTES, PSICOTROPICOS O INHALAR TOXICOS EN V.P.",	10,"VIOLACION LEY GENERAL DE SALUD",	13,"ALTERAR LA TRANQUILIDAD O EL ORDEN PUBLICO",	17,"ROBO VEHICULO",	21],
+          'CONSTITUCION':["LESIONES",	6,"ROBO PERSONA",	6,"ROBO VEHICULO",	11,"ALTERAR LA TRANQUILIDAD O EL ORDEN PUBLICO",	13,"VIOLACION LEY GENERAL DE SALUD",	17],
+          'SAN JUAN DE OCOTAN':["ROBO VEHICULO",	4,"ROBO NEGOCIO",	6,"CONSUMIR ESTUPEFACIENTES, PSICOTROPICOS O INHALAR TOXICOS EN V.P.",	23,"ALTERAR LA TRANQUILIDAD O EL ORDEN PUBLICO",	26,"VIOLACION LEY GENERAL DE SALUD",	27],
+          'ARCOS DE ZAPOPAN':["ROBO PERSONA",	6,"ROBO VEHICULO",	9,"VIOLACION LEY GENERAL DE SALUD",	10,"ROBO NEGOCIO",	13,"VEHICULO RECUPERADO",	13]
+         }
+
+
+// Map
+var projection = d3.geo.mercator()
+    .scale(135000)
+    .center([-103.4013758,20.6814281]) // Zapopan geoposition
+    .translate([width*0.63,height*0.62])
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+var path = d3.geo.path()
+    .projection(projection);
+var g = svg.append("g");
+var div = d3.select("body").append("div")   
+  .attr("class", "tooltip")               
+  .style("opacity", 0);
+var bars = d3.select("body").append("div")   
+  .attr("class", "bars")               
+function selecColonia(nColonia){
   if( colonias.indexOf(nColonia) > -1 )
      return "#B2B2B2"; 
   else 
      return "#303030"; 
 }
-
 function hoverColonia(nColonia){
-  var colonias = ["SAN JUAN DE OCOTAN",
-                  "ZAPOPAN CENTRO",
-                  "CONSTITUCION",
-                  "ARCOS DE ZAPOPAN",
-                  "FRACC TABACHINES"];
   if( colonias.indexOf(nColonia) > -1 )
     return "#99CCFF"; 
   else     
      return "#303030"; 
 }
-
-
-
 // Load Zapopan map
 d3.json("COLONIAS2.json", function(error, topology) {
   svg.selectAll(".colonia")
@@ -120,8 +124,52 @@ d3.json("COLONIAS2.json", function(error, topology) {
       .attr("fill",function(d){return(selecColonia(d.properties.SETT_NAME));})
       div.style("opacity", 0)
     })
+    .on("click", function(d){
+      if( colonias.indexOf(d.properties.SETT_NAME) > -1 ){
+        chartData = db[d.properties.SETT_NAME]
+        bar.selectAll("rect")
+          .remove();
+        bar.selectAll("text")
+          .remove();
+        bar.append("rect")
+            .attr("width", function(d,i){return x(chartData[1+i*2]);})
+            .attr("height", barHeight - 1);
+        bar.append("text")
+            .attr("x", function(d) { return x(37) - 3; })
+            .attr("y", barHeight / 2)
+            .attr("dy", ".35em")
+            .text(function(d,i){return chartData[i*2];});
+      }
+        
+    })
 });
 
+// Chart
+var data = [0,0,0,0,0];
+var barHeight = 20;
+var x = d3.scale.linear()
+    .domain([0, 37])
+    .range([0, width]);
+var chart = d3.select(".chart")
+    .attr("width", width)
+    .attr("height", barHeight * (data.length+1));
+var bar = chart.selectAll("g")
+    .data(data)
+  .enter().append("g")
+    .attr("transform", function(d, i) { return "translate(0," + i * barHeight + ")"; });
+bar.append("rect")
+    .attr("width", x)
+    .attr("height", barHeight - 1);
+bar.append("text")
+    .attr("x", function(d) { return x(d) - 3; })
+    .attr("y", barHeight / 2)
+    .attr("dy", ".35em")
+    .text(function(d) { return d; });
+
+var xAxis = d3.svg.axis().scale(x);
+var xAxisGroup = chart.append("g").attr("transform", "translate(0,100)").call(xAxis);
+
 </script>
+
 </body>
 </html>
